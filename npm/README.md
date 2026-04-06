@@ -1,11 +1,11 @@
-# @cgasgarth/claurst
+# claurst
 
 Install the Claurst CLI from prebuilt GitHub release binaries.
 
 ## Install
 
 ```bash
-npm install -g @cgasgarth/claurst
+npm install -g claurst
 ```
 
 ## What this package does

@@ -1,6 +1,6 @@
 {
-  "name": "@cgasgarth/claurst",
-  "version": "0.0.9",
+  "name": "claurst",
+  "version": "0.0.10",
   "description": "Thin npm wrapper for the Claurst Rust CLI",
   "license": "GPL-3.0-only",
   "homepage": "https://github.com/cgasgarth/claurst",

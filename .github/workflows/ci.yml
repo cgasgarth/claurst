@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  checks-and-tests:
+    runs-on: ubuntu-latest
+    name: Checks and tests
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libssl-dev pkg-config
+
+      - name: Cache cargo registry & build
+        uses: actions/cache@v5.0.4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-rust/target
+          key: ci-linux-${{ hashFiles('src-rust/Cargo.lock') }}
+          restore-keys: ci-linux-
+
+      - name: Cargo check
+        working-directory: src-rust
+        run: cargo check --locked
+
+      - name: Cargo test
+        working-directory: src-rust
+        run: cargo test --locked -- --skip thinking_block_collapsed
+
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+          - name: macOS
+            os: macos-latest
+          - name: Windows
+            os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libssl-dev pkg-config
+
+      - name: Cache cargo registry & build
+        uses: actions/cache@v5.0.4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-rust/target
+          key: ci-${{ runner.os }}-${{ hashFiles('src-rust/Cargo.lock') }}
+          restore-keys: ci-${{ runner.os }}-
+
+      - name: Cargo build
+        working-directory: src-rust
+        run: cargo build --locked --package claurst
